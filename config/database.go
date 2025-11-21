@@ -10,7 +10,7 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	dsn := "root@tcp(127.0.0.1:3306)/bersihin_express_temp?parseTime=true"
+	dsn := "root@tcp(127.0.0.1:3306)/laundry?parseTime=true"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {

@@ -8,19 +8,17 @@ import (
 	"time"
 )
 
-const TableNameOrder = "orders"
+const TableNameCategory = "categories"
 
-// Order mapped from table <orders>
-type Order struct {
+// Category mapped from table <categories>
+type Category struct {
 	ID        int32     `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
-	IDUser    int32     `gorm:"column:id_user;not null" json:"id_user"`
-	Status    string    `gorm:"column:status;not null;default:pending" json:"status"`
-	Notes     string    `gorm:"column:notes" json:"notes"`
+	Name      string    `gorm:"column:name;not null" json:"name"`
 	CreatedAt time.Time `gorm:"column:created_at;default:current_timestamp()" json:"created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at;default:current_timestamp()" json:"updated_at"`
 }
 
-// TableName Order's table name
-func (*Order) TableName() string {
-	return TableNameOrder
+// TableName Category's table name
+func (*Category) TableName() string {
+	return TableNameCategory
 }

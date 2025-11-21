@@ -16,7 +16,7 @@ type Comment struct {
 	IDOrder     int32     `gorm:"column:id_order;not null" json:"id_order"`
 	Title       string    `gorm:"column:title;not null" json:"title"`
 	Description string    `gorm:"column:description;not null" json:"description"`
-	Photo       string    `gorm:"column:photo;not null" json:"photo"`
+	Photo       string    `gorm:"column:photo" json:"photo"`
 	CreatedAt   time.Time `gorm:"column:created_at;not null;default:current_timestamp()" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"column:updated_at;not null;default:current_timestamp()" json:"updated_at"`
 }
