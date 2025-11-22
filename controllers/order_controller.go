@@ -81,7 +81,7 @@ func (OrderController) Create(c *gin.Context) {
 
 	var customer model.Customer
 
-	if body.Customer.Phone == "" {
+	if body.Customer.Phone != "" {
 		config.DB.Where("phone = ?", body.Customer.Phone).First(&customer)
 
 		if (customer.ID) == 0 {
