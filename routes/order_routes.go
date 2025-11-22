@@ -8,9 +8,9 @@ import (
 func OrderRoutes(r *gin.Engine) {
 	ctrl := controllers.OrderController{}
 
-	r.GET("/order", ctrl.GetAllOrder)
-	r.GET("/order/:id", ctrl.GetOrder)
-	r.POST("/order", ctrl.CreateOrder)
-	r.PUT("/order/:id", ctrl.UpdateOrder)
-	r.DELETE("order/:id", ctrl.DeleteOrder)
+	r.GET("/order", ctrl.GetAll)
+	r.GET("/order/:id", ctrl.GetByID)
+	r.POST("/order", ctrl.Create)
+	r.PUT("/order/:id", ctrl.Update)
+	r.DELETE("order/:id", ctrl.Delete)
 }

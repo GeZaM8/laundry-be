@@ -6,4 +6,5 @@ import (
 
 func RegisterRoutes(r *gin.Engine) {
 	OrderRoutes(r)
+	CategoryRoutes(r)
 }

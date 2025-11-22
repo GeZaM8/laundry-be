@@ -10,10 +10,9 @@ import (
 
 type OrderController struct{}
 
-func (OrderController) GetAllOrder(c *gin.Context) {
+func (OrderController) GetAll(c *gin.Context) {
 	var orders []model.Order
-
-	result := config.DB.Find(&orders)
+	result := config.DB.Preload("Customer").Preload("Items.Category").Find(&orders)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
@@ -24,20 +23,21 @@ func (OrderController) GetAllOrder(c *gin.Context) {
 
 	c.JSON(http.StatusOK, model.Response{
 		Status:  true,
-		Message: "Data Berhasil Diambil",
+		Message: "Orders Retrieved",
 		Data:    orders,
 	})
 }
 
-func (OrderController) GetOrder(c *gin.Context) {
+func (OrderController) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
 	var order model.Order
-	result := config.DB.First(&order, id)
+	result := config.DB.Preload("Customer").Preload("Items.Category").First(&order, id)
 
 	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, model.Response{
-			Status:  false,
+		c.JSON(http.StatusNotFound, model.Response{
+			Status: false,
+			// Message: "Order Not Found",
 			Message: result.Error.Error(),
 		})
 		return
@@ -45,16 +45,14 @@ func (OrderController) GetOrder(c *gin.Context) {
 
 	c.JSON(http.StatusOK, model.Response{
 		Status:  true,
-		Message: "Data Berhasil Diambil",
+		Message: "Order Retrieved",
 		Data:    order,
 	})
 }
 
-func (OrderController) CreateOrder(c *gin.Context) {
-	var order model.Order
-
-	err := c.ShouldBindJSON(&order)
-	if err != nil {
+func (OrderController) Create(c *gin.Context) {
+	var body model.Order
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
 			Message: err.Error(),
@@ -62,12 +60,46 @@ func (OrderController) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	order.ID = 0
+	var total float64 = 0
 
-	result := config.DB.Create(&order)
+	for i := range body.Items {
+		var cat model.Category
+		config.DB.First(&cat, body.Items[i].CategoryID)
 
+		var harga float64 = cat.PricePerUnit
+
+		if body.Items[i].Unit == "kg" {
+			body.Items[i].Price = harga * body.Items[i].WeightKg
+		} else {
+			body.Items[i].Price = harga * float64(body.Items[i].Qty)
+		}
+
+		total += body.Items[i].Price
+	}
+
+	body.TotalPrice = total
+
+	var customer model.Customer
+
+	if body.Customer.Phone == "" {
+		config.DB.Where("phone = ?", body.Customer.Phone).First(&customer)
+
+		if (customer.ID) == 0 {
+
+			customer.Name = body.Customer.Name
+			if customer.Name == "" {
+				customer.Name = "Pelanggan " + body.Customer.Phone
+			}
+			customer.Phone = body.Customer.Phone
+			config.DB.Create(&customer)
+		}
+
+		body.CustomerID = customer.ID
+	}
+
+	result := config.DB.Create(&body)
 	if result.Error != nil {
-		c.JSON(500, model.Response{
+		c.JSON(http.StatusInternalServerError, model.Response{
 			Status:  false,
 			Message: result.Error.Error(),
 		})
@@ -76,28 +108,25 @@ func (OrderController) CreateOrder(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, model.Response{
 		Status:  true,
-		Message: "Order Baru Ditambahkan",
-		Data:    order,
+		Message: "Order Created",
+		Data:    body,
 	})
 }
 
-func (OrderController) UpdateOrder(c *gin.Context) {
+func (OrderController) Update(c *gin.Context) {
 	id := c.Param("id")
 
 	var order model.Order
-
-	var existing model.Order
-	errExist := config.DB.First(&existing, id).Error
-	if errExist != nil {
+	if err := config.DB.First(&order, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, model.Response{
 			Status:  false,
-			Message: "Order Tidak Ditemukan",
+			Message: "Order Not Found",
 		})
 		return
 	}
 
-	err := c.ShouldBindJSON(&order)
-	if err != nil {
+	var body model.Order
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
 			Message: err.Error(),
@@ -105,47 +134,28 @@ func (OrderController) UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	result := config.DB.Model(&existing).Updates(order)
-
-	if result.Error != nil {
-		c.JSON(500, model.Response{
-			Status:  false,
-			Message: result.Error.Error(),
-		})
-		return
-	}
+	config.DB.Model(&order).Updates(body)
 
 	c.JSON(http.StatusOK, model.Response{
-		Status:  false,
-		Message: "Order Berhasil Diupdate",
-		Data:    existing,
+		Status:  true,
+		Message: "Order Updated",
+		Data:    order,
 	})
 }
 
-func (OrderController) DeleteOrder(c *gin.Context) {
+func (OrderController) Delete(c *gin.Context) {
 	id := c.Param("id")
 
-	var existing model.Order
-	if err := config.DB.First(&existing, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, model.Response{
-			Status:  false,
-			Message: "Order Tidak Ditemukan",
-		})
-		return
-	}
-
-	result := config.DB.Delete(&model.Order{}, id)
-	if result.Error != nil {
+	if err := config.DB.Delete(&model.Order{}, id).Error; err != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
-			Message: "Order Gagal Dihapus",
+			Message: "Delete Failed",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, model.Response{
 		Status:  true,
-		Message: "Order Berhasil Dihapus",
+		Message: "Order Deleted",
 	})
 }
-

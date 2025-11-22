@@ -9,6 +9,8 @@ import (
 func main() {
 	config.ConnectDatabase()
 
+	config.DB.AutoMigrate()
+
 	r := gin.Default()
 	routes.RegisterRoutes(r)
 

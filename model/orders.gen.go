@@ -12,12 +12,15 @@ const TableNameOrder = "orders"
 
 // Order mapped from table <orders>
 type Order struct {
-	ID        int32     `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
-	IDUser    int32     `gorm:"column:id_user;not null" json:"id_user"`
-	Status    string    `gorm:"column:status;not null;default:pending" json:"status"`
-	Notes     string    `gorm:"column:notes" json:"notes"`
-	CreatedAt time.Time `gorm:"column:created_at;default:current_timestamp()" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at;default:current_timestamp()" json:"updated_at"`
+	ID         int32     `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
+	CustomerID int32     `gorm:"column:customer_id" json:"customer_id"`
+	Status     string    `gorm:"column:status;default:pending" json:"status"`
+	Notes      string    `gorm:"column:notes" json:"notes"`
+	TotalPrice float64   `gorm:"column:total_price;default:0.00" json:"total_price"`
+	Customer   *Customer    `json:"customer" gorm:"foreignKey:CustomerID"`
+	Items      []OrderItem  `json:"items" gorm:"foreignKey:OrderID"`
+	CreatedAt  time.Time `gorm:"column:created_at;default:current_timestamp()" json:"created_at"`
+	UpdatedAt  time.Time `gorm:"column:updated_at;default:current_timestamp()" json:"updated_at"`
 }
 
 // TableName Order's table name

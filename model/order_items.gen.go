@@ -15,12 +15,13 @@ type OrderItem struct {
 	ID         int32     `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
 	OrderID    int32     `gorm:"column:order_id;not null" json:"order_id"`
 	CategoryID int32     `gorm:"column:category_id;not null" json:"category_id"`
-	Qty        int32     `gorm:"column:qty;not null;default:1" json:"qty"`
+	Qty        int32     `gorm:"column:qty;default:1" json:"qty"`
 	WeightKg   float64   `gorm:"column:weight_kg" json:"weight_kg"`
-	Unit       string    `gorm:"column:unit;not null;default:kg" json:"unit"`
+	Unit       string    `gorm:"column:unit;not null" json:"unit"`
+	Price      float64   `gorm:"column:price;not null" json:"price"`
 	Notes      string    `gorm:"column:notes" json:"notes"`
+	Category   Category  `json:"category" gorm:"foreignKey:CategoryID"`
 	CreatedAt  time.Time `gorm:"column:created_at;default:current_timestamp()" json:"created_at"`
-	UpdatedAt  time.Time `gorm:"column:updated_at;default:current_timestamp()" json:"updated_at"`
 }
 
 // TableName OrderItem's table name
