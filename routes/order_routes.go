@@ -1,12 +1,13 @@
 package routes
 
 import (
+	"github.com/GeZaM8/laundry-be/config"
 	"github.com/GeZaM8/laundry-be/controllers"
 	"github.com/gin-gonic/gin"
 )
 
-func OrderRoutes(r *gin.Engine) {
-	ctrl := controllers.OrderController{}
+func OrderRoutes(r *gin.RouterGroup) {
+	ctrl := controllers.NewOrderController(config.DB)
 
 	r.GET("/order", ctrl.GetAll)
 	r.GET("/order/:id", ctrl.GetByID)

@@ -3,16 +3,22 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/GeZaM8/laundry-be/config"
 	"github.com/GeZaM8/laundry-be/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-type OrderController struct{}
+type OrderController struct {
+	DB *gorm.DB
+}
 
-func (OrderController) GetAll(c *gin.Context) {
+func NewOrderController(db *gorm.DB) *OrderController {
+	return &OrderController{DB: db}
+}
+
+func (o *OrderController) GetAll(c *gin.Context) {
 	var orders []model.Order
-	result := config.DB.Preload("Customer").Preload("Items.Category").Find(&orders)
+	result := o.DB.Preload("Customer").Preload("Items.Category").Find(&orders)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
@@ -28,11 +34,11 @@ func (OrderController) GetAll(c *gin.Context) {
 	})
 }
 
-func (OrderController) GetByID(c *gin.Context) {
+func (o *OrderController) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
 	var order model.Order
-	result := config.DB.Preload("Customer").Preload("Items.Category").First(&order, id)
+	result := o.DB.Preload("Customer").Preload("Items.Category").First(&order, id)
 
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, model.Response{
@@ -50,7 +56,7 @@ func (OrderController) GetByID(c *gin.Context) {
 	})
 }
 
-func (OrderController) Create(c *gin.Context) {
+func (o *OrderController) Create(c *gin.Context) {
 	var body model.Order
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
@@ -64,7 +70,7 @@ func (OrderController) Create(c *gin.Context) {
 
 	for i := range body.Items {
 		var cat model.Category
-		config.DB.First(&cat, body.Items[i].CategoryID)
+		o.DB.First(&cat, body.Items[i].CategoryID)
 
 		var harga float64 = cat.PricePerUnit
 
@@ -79,10 +85,10 @@ func (OrderController) Create(c *gin.Context) {
 
 	body.TotalPrice = total
 
-	var customer model.Customer
+	var customer model.User
 
 	if body.Customer.Phone != "" {
-		config.DB.Where("phone = ?", body.Customer.Phone).First(&customer)
+		o.DB.Where("phone = ?", body.Customer.Phone).First(&customer)
 
 		if (customer.ID) == 0 {
 
@@ -91,13 +97,13 @@ func (OrderController) Create(c *gin.Context) {
 				customer.Name = "Pelanggan " + body.Customer.Phone
 			}
 			customer.Phone = body.Customer.Phone
-			config.DB.Create(&customer)
+			o.DB.Create(&customer)
 		}
 
 		body.CustomerID = customer.ID
 	}
 
-	result := config.DB.Create(&body)
+	result := o.DB.Create(&body)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, model.Response{
 			Status:  false,
@@ -113,11 +119,11 @@ func (OrderController) Create(c *gin.Context) {
 	})
 }
 
-func (OrderController) Update(c *gin.Context) {
+func (o *OrderController) Update(c *gin.Context) {
 	id := c.Param("id")
 
 	var order model.Order
-	if err := config.DB.First(&order, id).Error; err != nil {
+	if err := o.DB.First(&order, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, model.Response{
 			Status:  false,
 			Message: "Order Not Found",
@@ -134,7 +140,7 @@ func (OrderController) Update(c *gin.Context) {
 		return
 	}
 
-	config.DB.Model(&order).Updates(body)
+	o.DB.Model(&order).Updates(body)
 
 	c.JSON(http.StatusOK, model.Response{
 		Status:  true,
@@ -143,10 +149,10 @@ func (OrderController) Update(c *gin.Context) {
 	})
 }
 
-func (OrderController) Delete(c *gin.Context) {
+func (o *OrderController) Delete(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := config.DB.Delete(&model.Order{}, id).Error; err != nil {
+	if err := o.DB.Delete(&model.Order{}, id).Error; err != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
 			Message: "Delete Failed",

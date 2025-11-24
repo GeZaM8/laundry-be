@@ -17,7 +17,7 @@ type Order struct {
 	Status     string    `gorm:"column:status;default:pending" json:"status"`
 	Notes      string    `gorm:"column:notes" json:"notes"`
 	TotalPrice float64   `gorm:"column:total_price;default:0.00" json:"total_price"`
-	Customer   *Customer    `json:"customer" gorm:"foreignKey:CustomerID"`
+	Customer   *User    `json:"customer" gorm:"foreignKey:CustomerID"`
 	Items      []OrderItem  `json:"items" gorm:"foreignKey:OrderID"`
 	CreatedAt  time.Time `gorm:"column:created_at;default:current_timestamp()" json:"created_at"`
 	UpdatedAt  time.Time `gorm:"column:updated_at;default:current_timestamp()" json:"updated_at"`

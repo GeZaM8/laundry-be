@@ -3,16 +3,22 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/GeZaM8/laundry-be/config"
 	"github.com/GeZaM8/laundry-be/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-type CategoryController struct{}
+type CategoryController struct {
+	DB *gorm.DB
+}
 
-func (CategoryController) GetAll(c *gin.Context) {
+func NewCategoryController(db *gorm.DB) *CategoryController {
+	return &CategoryController{DB: db}
+}
+
+func (cc *CategoryController) GetAll(c *gin.Context) {
 	var categories []model.Category
-	result := config.DB.Find(&categories)
+	result := cc.DB.Find(&categories)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
@@ -27,11 +33,11 @@ func (CategoryController) GetAll(c *gin.Context) {
 	})
 }
 
-func (CategoryController) GetByID(c *gin.Context) {
+func (cc *CategoryController) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
 	var category model.Category
-	result := config.DB.First(&category, id)
+	result := cc.DB.First(&category, id)
 
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, model.Response{
@@ -48,7 +54,7 @@ func (CategoryController) GetByID(c *gin.Context) {
 	})
 }
 
-func (CategoryController) Create(c *gin.Context) {
+func (cc *CategoryController) Create(c *gin.Context) {
 	var category model.Category
 
 	if err := c.ShouldBindJSON(&category); err != nil {
@@ -61,7 +67,7 @@ func (CategoryController) Create(c *gin.Context) {
 
 	category.ID = 0
 
-	result := config.DB.Create(&category)
+	result := cc.DB.Create(&category)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, model.Response{
 			Status:  false,
@@ -77,11 +83,11 @@ func (CategoryController) Create(c *gin.Context) {
 	})
 }
 
-func (CategoryController) Update(c *gin.Context) {
+func (cc *CategoryController) Update(c *gin.Context) {
 	id := c.Param("id")
 
 	var existing model.Category
-	if err := config.DB.First(&existing, id).Error; err != nil {
+	if err := cc.DB.First(&existing, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, model.Response{
 			Status:  false,
 			Message: "Category Not Found",
@@ -98,7 +104,7 @@ func (CategoryController) Update(c *gin.Context) {
 		return
 	}
 
-	result := config.DB.Model(&existing).Updates(body)
+	result := cc.DB.Model(&existing).Updates(body)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, model.Response{
 			Status:  false,
@@ -114,10 +120,10 @@ func (CategoryController) Update(c *gin.Context) {
 	})
 }
 
-func (CategoryController) Delete(c *gin.Context) {
+func (cc *CategoryController) Delete(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := config.DB.Delete(&model.Category{}, id).Error; err != nil {
+	if err := cc.DB.Delete(&model.Category{}, id).Error; err != nil {
 		c.JSON(http.StatusBadRequest, model.Response{
 			Status:  false,
 			Message: "Category Delete Failed",
